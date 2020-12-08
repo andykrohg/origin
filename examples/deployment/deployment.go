@@ -69,7 +69,7 @@ func main() {
 	}
 
 	dat, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
-    token := fmt.Sprintf(strings.TrimSuffix(string(dat), "\n"))
+	token := fmt.Sprintf(strings.TrimSuffix(string(dat), "\n"))
 	server := os.Getenv("KUBERNETES_SERVICE_HOST")
 	port := os.Getenv("KUBERNETES_PORT_443_TCP_PORT")
 	node := os.Getenv("NODE_NAME")
@@ -88,11 +88,12 @@ func main() {
 		}
 		var result map[string]interface{}
 		json.Unmarshal(bodyBytes, &result)
+		labels := result["metadata"].(map[string]interface{})["labels"].(map[string]interface{})
 		spec := result["spec"].(map[string]interface{})
 		providerID := spec["providerID"].(string)
-
+		
+		zone = labels["topology.kubernetes.io/zone"].(string)
 		cloud = providerID[0:strings.Index(providerID, ":")]
-		zone = providerID[strings.Index(providerID, "///")+3:strings.LastIndex(providerID, "/")]
 	} else {
 		log.Printf("Unable to retrieve node info! Received %d", resp.StatusCode)
 	}
