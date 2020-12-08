@@ -88,11 +88,11 @@ func main() {
 		}
 		var result map[string]interface{}
 		json.Unmarshal(bodyBytes, &result)
+		labels := result["metadata"].(map[string]interface{})["labels"].(map[string]interface{})
+		zone := labels["topology.kubernetes.io/zone"].(string)
 		spec := result["spec"].(map[string]interface{})
 		providerID := spec["providerID"].(string)
-
-		cloud = providerID[0:strings.Index(providerID, ":")]
-		zone = providerID[strings.Index(providerID, "///")+3:strings.LastIndex(providerID, "/")]
+		cloud := providerID[0:strings.Index(providerID, ":")]
 	} else {
 		log.Printf("Unable to retrieve node info! Received %d", resp.StatusCode)
 	}
