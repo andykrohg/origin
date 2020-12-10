@@ -17,6 +17,8 @@ var (
 	color    string
 	cloud    string
 	zone     string
+	node     string
+	pod      string
 )
 
 func deploymentHandler(w http.ResponseWriter, r *http.Request) {
@@ -38,11 +40,13 @@ func deploymentHandler(w http.ResponseWriter, r *http.Request) {
 		<div class="box">
 			<h3>Cloud Provider: %[4]s</h3>
 			<h3>Zone: %[5]s</h3>
+			<h3>Node: %[6]s</h3>
+			<h3>Pod: %[7]s</h3>
 			<h1>%[1]s</h1><h2>%[2]s</h2>
 		</div>
 	</body>
 	</html>`
-	fmt.Fprintf(w, htmlContent, version, subtitle, color, cloud, zone)
+	fmt.Fprintf(w, htmlContent, version, subtitle, color, cloud, zone, node, pod)
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -73,6 +77,7 @@ func main() {
 	server := os.Getenv("KUBERNETES_SERVICE_HOST")
 	port := os.Getenv("KUBERNETES_PORT_443_TCP_PORT")
 	node := os.Getenv("NODE_NAME")
+	pod := os.Getenv("HOSTNAME")
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://%s:%s/api/v1/nodes/%s", server, port, node), nil)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 	resp, err := client.Do(req)
@@ -91,9 +96,11 @@ func main() {
 		labels := result["metadata"].(map[string]interface{})["labels"].(map[string]interface{})
 		spec := result["spec"].(map[string]interface{})
 		providerID := spec["providerID"].(string)
-		
-		zone = labels["topology.kubernetes.io/zone"].(string)
+
 		cloud = providerID[0:strings.Index(providerID, ":")]
+		zone = labels["topology.kubernetes.io/zone"].(string)
+		node = node
+		pod = pod
 	} else {
 		log.Printf("Unable to retrieve node info! Received %d", resp.StatusCode)
 	}
